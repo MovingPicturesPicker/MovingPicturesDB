@@ -33,32 +33,24 @@ while True:
         time.sleep(2)
 
 
-def find_moving_pic(movie_id: int) -> dict | None:
-    "Find a moving picture."
-    for movie in movies:
-        if not movie["id"] == movie_id:
-            continue
-        return movie
-
-
-@mpic.get("/test_db")
-async def test_dp(db: Session = Depends(DB.get_db)):
+@mpic.get("/movies/all")
+async def get_all_movies(db: Session = Depends(DB.get_db)) -> dict:
     """Get all Moving Picture entries"""
     all_movies = db.query(models.MovingPicture).all()
     return {"data": all_movies}
 
 
-@mpic.get("/movie/latest")
-async def get_latest_movie():
+@mpic.get("/movies/latest")
+async def get_latest_movie() -> dict:
     """Get the most recently added movie."""
     movie = movies[-1]
     return movie
 
 
-@mpic.get("/movie/{id}")
-async def get_movie(id: int, response=Response):
+@mpic.get("/movies/{id}")
+async def get_movie(id: int, db: Session = Depends(DB.get_db)) -> dict:
     """Get a single movie entry, using the movie's PK."""
-    movie = find_moving_pic(movie_id=id)
+    movie = db.query(models.MovingPicture).filter(models.MovingPicture.id == id).first()
     if movie is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No movie could be found."
@@ -67,10 +59,10 @@ async def get_movie(id: int, response=Response):
 
 
 @mpic.post("/new-movie", status_code=status.HTTP_201_CREATED)
-async def create_movie(
+async def create_movie (
     movie: schemas.MovingPicture,
     db: Session = Depends(DB.get_db),
-):
+) -> dict:
     """Adds new entry in the the MovingPicture Table"""
     print(movie.model_dump())
     new_movie = models.MovingPicture(**movie.model_dump())
@@ -82,13 +74,19 @@ async def create_movie(
     return {"data": new_movie}
 
 
-@mpic.delete("/movie/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_movie(id: int, response: Response):
+@mpic.update("/movies/{id}")
+async def update_movie(id:int, db: Session = Depends(DB.get_db)) -> dict:
+
+
+
+@mpic.delete("/movies/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_movie(id: int, db: Session = Depends(DB.get_db)) -> dict:
     """Remove a single movie entry from the DB, using the movie's PK."""
-    movie = find_moving_pic(movie_id=id)
-    if movie is None:
+    movie = movie = db.query(models.MovingPicture).filter(models.MovingPicture.id == id)
+    if movie.first() is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No movie could be found."
         )
-    movies.remove(movie)
+    movie.delete(synchronize_session=False)
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
