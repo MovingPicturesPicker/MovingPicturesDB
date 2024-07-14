@@ -1,5 +1,5 @@
 import time
-
+import configuration as cfg
 import psycopg
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from movingpicturesdb import database as DB
@@ -15,11 +15,11 @@ mpic = FastAPI()
 while True:
     try:
         connection = psycopg.connect(
-            host="localhost",
-            port=5432,
-            dbname="mpictures-db",
-            user="mpictures-db",
-            password="^$RBFC4b5d",
+            host=cfg.HOST,
+            port=cfg.PORT,
+            dbname=cfg.DATABASE_NAME,
+            user=cfg.USERNAME,
+            password=cfg.PASSWORD,
             row_factory=dict_row,
         )
         cursor = connection.cursor()

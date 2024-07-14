@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date
 
 from pydantic import BaseModel, Field
 
@@ -25,8 +25,5 @@ class CreateMovingPicture(BaseMovingPicture):
     pass
 
 
-class MovingPictureResponse(BaseModel):
-    title: str
-    released_date: date
-    description: str | None = Field(default=None)
+class MovingPictureResponse(BaseMovingPicture):
     from_attributes: bool = Field(default=True)
